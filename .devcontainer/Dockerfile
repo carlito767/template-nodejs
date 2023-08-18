@@ -5,19 +5,24 @@ ARG PNPM_VERSION=8.6.12
 
 # Envs
 ENV PNPM_VERSION=${PNPM_VERSION}
+ENV PNPM_HOME=/usr/local/bin
 
 # Set working directory
 WORKDIR /workspace
 
-# Update npm and install pnpm
-RUN npm i -g npm@latest && \
-  npm install -g pnpm@$PNPM_VERSION && \
-  pnpm config set store-dir .pnpm-store
-
-# Fetch packages from lockfile into virtual store, package manifest is ignored
+# Copy configuration files
 COPY .npmrc pnpm-lock*.yaml ./
-RUN pnpm fetch
 
-# Copy project files and install dependencies from virtual store
+# Update npm
+RUN npm i -g npm@latest && \
+  # Install pnpm
+  npm install -g pnpm@$PNPM_VERSION &&\
+  # Config store
+  pnpm config set store-dir .pnpm-store &&\
+  # Fetch packages from lockfile into virtual store, package manifest is ignored
+  pnpm fetch &&\
+  # Install dependencies from virtual store
+  pnpm install -r --offline
+
+# Copy project files
 COPY . ./
-RUN pnpm install -r --offline
